@@ -2,6 +2,9 @@ from fastapi import FastAPI, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.database import get_db
+from app.agents.query_agent import query_agent
+from app.agents.anomaly_agent import anomaly_agent
+from app.agents.report_agent import report_agent
 
 app = FastAPI(
     title="Atlas Commercial Bank API",
@@ -159,3 +162,25 @@ def get_pnl_variance(db: Session = Depends(get_db)):
     """
     result = db.execute(text(query))
     return result.mappings().all()
+# ── AI Agents ──────────────────────────────────────────
+
+@app.get("/agent/query")
+def ask_question(
+    question: str = Query(..., description="Ask a question about the financial data"),
+    db: Session = Depends(get_db)
+):
+    return query_agent(question, db)
+@app.get("/agent/anomaly")
+def detect_anomalies(
+    country: str = None,
+    department: str = None,
+    db: Session = Depends(get_db)
+):
+    return anomaly_agent(db, country, department)
+@app.get("/agent/report")
+def generate_report(
+    country: str = None,
+    report_type: str = "full",
+    db: Session = Depends(get_db)
+):
+    return report_agent(db, country, report_type)

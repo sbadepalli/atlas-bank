@@ -6,3 +6,5 @@ pandas
 faker
 numpy
 python-dotenv
+google-generativeai
+anthropic
