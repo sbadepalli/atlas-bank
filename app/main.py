@@ -5,6 +5,8 @@ from app.database import get_db
 from app.agents.query_agent import query_agent
 from app.agents.anomaly_agent import anomaly_agent
 from app.agents.report_agent import report_agent
+from app.agents.rag_agent import rag_agent, save_report_to_rag
+from datetime import datetime
 
 app = FastAPI(
     title="Atlas Commercial Bank API",
@@ -184,3 +186,34 @@ def generate_report(
     db: Session = Depends(get_db)
 ):
     return report_agent(db, country, report_type)
+@app.post("/agent/report/save")
+def save_report(
+    country: str = None,
+    report_type: str = "full",
+    db: Session = Depends(get_db)
+):
+    # generate a new report
+    result = report_agent(db, country, report_type)
+    
+    if "error" in result:
+        return result
+    
+    # save it to ChromaDB
+    save_result = save_report_to_rag(
+        report_text=result["report"],
+        country=result["country"],
+        report_date=result["report_date"]
+    )
+    
+    return {
+        "report_generated": True,
+        "country": result["country"],
+        "report_date": result["report_date"],
+        "rag_save": save_result
+    }
+
+@app.get("/agent/rag")
+def ask_rag(
+    question: str = Query(..., description="Ask a question about past financial reports")
+):
+    return rag_agent(question)
