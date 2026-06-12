@@ -7,6 +7,7 @@ from app.agents.anomaly_agent import anomaly_agent
 from app.agents.report_agent import report_agent
 from app.agents.rag_agent import rag_agent, save_report_to_rag
 from datetime import datetime
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="Atlas Commercial Bank API",
@@ -14,6 +15,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.get("/")
 def home():
     return {"message": "Welcome to Atlas Commercial Bank API"}
