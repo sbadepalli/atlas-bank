@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid
 } from 'recharts';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'http://13.219.143.181:8000';
 const COLORS = ['#0d3b66', '#3a86ff', '#8338ec', '#fb5607', '#ffbe0b', '#06d6a0', '#ef476f', '#118ab2'];
 
 function Dashboard() {
