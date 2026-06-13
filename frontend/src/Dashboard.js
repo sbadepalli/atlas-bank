@@ -56,7 +56,7 @@ function Dashboard() {
             <BarChart data={pnlByCountry}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="country" />
-              <YAxis tickFormatter={(v) => `$${(v/1e6).toFixed(0)}M` />
+              <YAxis tickFormatter={(v) => `$${(v/1e6).toFixed(0)}M`} />
               <Tooltip formatter={(v) => `$${(v/1e6).toFixed(1)}M`} />
               <Legend />
               <Bar dataKey="total_revenue" fill="#0d3b66" name="Revenue" />
