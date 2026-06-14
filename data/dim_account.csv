@@ -1,0 +1,16 @@
+account_id,account_code,account_name,account_group,account_category,account_type
+1,4000,Interest Income,Lending Income,Income,Revenue
+2,4010,Investment Income,Lending Income,Income,Revenue
+3,4100,Transaction Fees,Fee Income,Income,Revenue
+4,4110,Advisory & Service Fees,Fee Income,Income,Revenue
+5,5000,Salaries & Wages,Compensation,Operating Expense,Expense
+6,5010,Bonuses & Incentives (IC/RSU),Compensation,Operating Expense,Expense
+7,5100,Software Licenses,Technology,Operating Expense,Expense
+8,5110,Cloud Infrastructure,Technology,Operating Expense,Expense
+9,5200,Rent & Utilities,Occupancy,Operating Expense,Expense
+10,5210,Office Maintenance,Occupancy,Operating Expense,Expense
+11,5300,Consulting & Legal,Professional Services,Operating Expense,Expense
+12,5400,Travel & Entertainment,General & Admin,Operating Expense,Expense
+13,5410,Marketing & Advertising,General & Admin,Operating Expense,Expense
+14,6000,Loan Loss Provisions,Credit Risk,Credit Risk,Expense
+15,7000,Income Tax Expense,Tax,Tax,Expense

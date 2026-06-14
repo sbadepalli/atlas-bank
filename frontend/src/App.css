@@ -187,3 +187,69 @@ body {
   font-size: 18px;
   color: #0d3b66;
 }
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px 16px;
+  background: white;
+  border-radius: 8px;
+}
+
+.back-btn {
+  padding: 6px 14px;
+  background: #0d3b66;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.breadcrumb-path {
+  font-weight: bold;
+  color: #0d3b66;
+}
+
+.hint {
+  color: #888;
+  font-size: 13px;
+  margin-top: -8px;
+  margin-bottom: 12px;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+.clickable-row:hover {
+  background: #f0f7ff;
+}
+
+.currency-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.toggle-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.toggle-btn {
+  padding: 6px 14px;
+  border: 1px solid #0d3b66;
+  background: white;
+  color: #0d3b66;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.toggle-btn.active {
+  background: #0d3b66;
+  color: white;
+}

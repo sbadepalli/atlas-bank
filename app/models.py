@@ -1,10 +1,65 @@
 from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey
-from sqlalchemy.orm import relationship
 from app.database import Base
+
+# ── Dimension Tables ────────────────────────────────────
+
+class DimEntity(Base):
+    __tablename__ = "dim_entity"
+    entity_id = Column(Integer, primary_key=True)
+    entity_name = Column(String)
+    country = Column(String)
+    currency = Column(String)
+
+class DimDepartment(Base):
+    __tablename__ = "dim_department"
+    department_id = Column(Integer, primary_key=True)
+    department_name = Column(String)
+
+class DimAccount(Base):
+    __tablename__ = "dim_account"
+    account_id = Column(Integer, primary_key=True)
+    account_code = Column(String)
+    account_name = Column(String)
+    account_group = Column(String)
+    account_category = Column(String)
+    account_type = Column(String)
+
+class DimScenario(Base):
+    __tablename__ = "dim_scenario"
+    scenario_id = Column(Integer, primary_key=True)
+    scenario_name = Column(String)
+
+class DimPeriod(Base):
+    __tablename__ = "dim_period"
+    period_id = Column(Integer, primary_key=True)
+    year = Column(Integer)
+    month = Column(Integer)
+    period_date = Column(Date)
+
+class DimFxRate(Base):
+    __tablename__ = "dim_fx_rate"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    currency = Column(String)
+    period_id = Column(Integer, ForeignKey("dim_period.period_id"))
+    rate_to_usd = Column(Float)
+
+# ── Fact Table ──────────────────────────────────────────
+
+class FactFinancials(Base):
+    __tablename__ = "fact_financials"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    entity_id = Column(Integer, ForeignKey("dim_entity.entity_id"))
+    department_id = Column(Integer, ForeignKey("dim_department.department_id"))
+    account_id = Column(Integer, ForeignKey("dim_account.account_id"))
+    scenario_id = Column(Integer, ForeignKey("dim_scenario.scenario_id"))
+    period_id = Column(Integer, ForeignKey("dim_period.period_id"))
+    amount_local = Column(Float)
+    amount_usd = Column(Float)
+
+# ── Existing Table (kept for employees) ─────────────────
 
 class Employee(Base):
     __tablename__ = "employees"
-
     employee_id = Column(String, primary_key=True)
     full_name = Column(String)
     department = Column(String)
@@ -17,35 +72,3 @@ class Employee(Base):
     total_compensation = Column(Float)
     hire_date = Column(Date)
     manager_id = Column(String, nullable=True)
-
-class PnLActual(Base):
-    __tablename__ = "pnl_actual"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    country = Column(String)
-    department = Column(String)
-    month = Column(Date)
-    revenue = Column(Float)
-    interest_income = Column(Float)
-    fee_income = Column(Float)
-    operating_expenses = Column(Float)
-    loan_loss_provisions = Column(Float)
-    net_income = Column(Float)
-    tax = Column(Float)
-    net_profit_after_tax = Column(Float)
-
-class PnLBudget(Base):
-    __tablename__ = "pnl_budget"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    country = Column(String)
-    department = Column(String)
-    month = Column(Date)
-    budgeted_revenue = Column(Float)
-    budgeted_expenses = Column(Float)
-    budgeted_net_income = Column(Float)
-    budgeted_tax = Column(Float)
-    budgeted_net_profit_after_tax = Column(Float)
-    variance_revenue = Column(Float)
-    variance_expenses = Column(Float)
-    variance_net_profit = Column(Float)
