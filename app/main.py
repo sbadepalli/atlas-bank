@@ -227,3 +227,104 @@ def get_financials_variance(
     """
     result = db.execute(text(query))
     return result.mappings().all()
+@app.get("/employees/comp-by-country")
+def get_comp_by_country(
+    department: str,
+    db: Session = Depends(get_db)
+):
+    """Compensation breakdown by country for a given department"""
+    query = """
+        SELECT
+            country,
+            COUNT(*) as headcount,
+            ROUND(AVG(salary)::numeric, 2) as avg_salary,
+            ROUND(AVG(ic)::numeric, 2) as avg_ic,
+            ROUND(AVG(rsu)::numeric, 2) as avg_rsu,
+            ROUND(AVG(total_compensation)::numeric, 2) as avg_total_comp
+        FROM employees
+        WHERE department = :department
+        GROUP BY country
+        ORDER BY avg_total_comp DESC
+    """
+    result = db.execute(text(query), {"department": department})
+    return result.mappings().all()
+
+@app.get("/financials/variance-by-department")
+def get_variance_by_department(
+    country: str,
+    db: Session = Depends(get_db)
+):
+    """Budget vs Forecast variance by department for a given country"""
+    query = """
+        WITH budget AS (
+            SELECT d.department_name,
+                   ROUND(SUM(CASE WHEN a.account_type = 'Revenue' THEN f.amount_usd ELSE 0 END)::numeric, 2) as budget_revenue,
+                   ROUND(SUM(CASE WHEN a.account_type = 'Revenue' THEN f.amount_usd ELSE -f.amount_usd END)::numeric, 2) as budget_profit
+            FROM fact_financials f
+            JOIN dim_entity e ON f.entity_id = e.entity_id
+            JOIN dim_department d ON f.department_id = d.department_id
+            JOIN dim_account a ON f.account_id = a.account_id
+            JOIN dim_scenario s ON f.scenario_id = s.scenario_id
+            WHERE e.country = :country AND s.scenario_name = 'Budget'
+            GROUP BY d.department_name
+        ),
+        forecast AS (
+            SELECT d.department_name,
+                   ROUND(SUM(CASE WHEN a.account_type = 'Revenue' THEN f.amount_usd ELSE 0 END)::numeric, 2) as forecast_revenue,
+                   ROUND(SUM(CASE WHEN a.account_type = 'Revenue' THEN f.amount_usd ELSE -f.amount_usd END)::numeric, 2) as forecast_profit
+            FROM fact_financials f
+            JOIN dim_entity e ON f.entity_id = e.entity_id
+            JOIN dim_department d ON f.department_id = d.department_id
+            JOIN dim_account a ON f.account_id = a.account_id
+            JOIN dim_scenario s ON f.scenario_id = s.scenario_id
+            WHERE e.country = :country AND s.scenario_name = 'Forecast'
+            GROUP BY d.department_name
+        )
+        SELECT
+            b.department_name,
+            b.budget_revenue, f.forecast_revenue,
+            b.budget_profit, f.forecast_profit,
+            ROUND((f.forecast_revenue - b.budget_revenue)::numeric, 2) as variance_revenue,
+            ROUND((f.forecast_profit - b.budget_profit)::numeric, 2) as variance_profit
+        FROM budget b
+        JOIN forecast f ON b.department_name = f.department_name
+        ORDER BY variance_profit DESC
+    """
+    result = db.execute(text(query), {"country": country})
+    return result.mappings().all()
+
+@app.get("/financials/variance-monthly")
+def get_variance_monthly(
+    country: str,
+    db: Session = Depends(get_db)
+):
+    """Monthly Budget vs Forecast net profit trend for a given country"""
+    query = """
+        SELECT
+            p.period_date,
+            s.scenario_name,
+            ROUND(SUM(CASE WHEN a.account_type = 'Revenue' THEN f.amount_usd ELSE -f.amount_usd END)::numeric, 2) as net_profit
+        FROM fact_financials f
+        JOIN dim_entity e ON f.entity_id = e.entity_id
+        JOIN dim_account a ON f.account_id = a.account_id
+        JOIN dim_scenario s ON f.scenario_id = s.scenario_id
+        JOIN dim_period p ON f.period_id = p.period_id
+        WHERE e.country = :country AND s.scenario_name IN ('Budget', 'Forecast')
+        GROUP BY p.period_date, s.scenario_name
+        ORDER BY p.period_date ASC
+    """
+    result = db.execute(text(query), {"country": country})
+    rows = [dict(r) for r in result.mappings().all()]
+
+    # pivot into {period_date, budget, forecast}
+    pivot = {}
+    for row in rows:
+        pd_date = str(row["period_date"])
+        if pd_date not in pivot:
+            pivot[pd_date] = {"period_date": pd_date, "budget": None, "forecast": None}
+        if row["scenario_name"] == "Budget":
+            pivot[pd_date]["budget"] = row["net_profit"]
+        else:
+            pivot[pd_date]["forecast"] = row["net_profit"]
+
+    return list(pivot.values())
