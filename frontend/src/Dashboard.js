@@ -24,7 +24,9 @@ function Dashboard() {
 
   const [workforce, setWorkforce] = useState([]);
   const [byCountryHC, setByCountryHC] = useState([]);
-  const [variance, setVariance] = useState([]);
+  const [selectedHCCountry, setSelectedHCCountry] = useState(null);
+  const [hcByDepartment, setHcByDepartment] = useState([]);
+const [variance, setVariance] = useState([]);
 
   // Workforce drill-through
   const [selectedWorkforceDept, setSelectedWorkforceDept] = useState(null);
@@ -124,7 +126,20 @@ function Dashboard() {
       setLoading(false);
     }
   };
-
+// ── Drill into Headcount country ──────────────────────
+  const drillIntoHeadcount = async (country) => {
+    setLoading(true);
+    try {
+      const data = await fetch(`${API_BASE}/employees/by-department-for-country?country=${encodeURIComponent(country)}`).then(r => r.json());
+      setHcByDepartment(data);
+      setSelectedHCCountry(country);
+      setLevel('headcount-detail');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
   // ── Drill into Variance country ───────────────────────
   const drillIntoVariance = async (country) => {
     setLoading(true);
@@ -161,6 +176,9 @@ function Dashboard() {
     } else if (level === 'variance-detail') {
       setLevel('country');
       setSelectedVarianceCountry(null);
+    }else if (level === 'headcount-detail') {
+      setLevel('country');
+      setSelectedHCCountry(null);
     }
   };
 
@@ -182,6 +200,7 @@ function Dashboard() {
             {selectedAccount && ` / ${selectedAccount}`}
             {selectedWorkforceDept && `Workforce / ${selectedWorkforceDept}`}
             {selectedVarianceCountry && `Variance / ${selectedVarianceCountry}`}
+             {selectedHCCountry && `Headcount / ${selectedHCCountry}`}
           </span>
         </div>
       )}
@@ -287,17 +306,21 @@ function Dashboard() {
           {/* Headcount by Country */}
           <div className="dash-section">
             <h2>🌍 Headcount by Country</h2>
+            <p className="hint">Click a bar to see headcount by department for that country</p>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={byCountryHC}>
+              <BarChart data={byCountryHC} onClick={(e) => {
+                if (e && e.activePayload && e.activePayload[0]) {
+                  drillIntoHeadcount(e.activePayload[0].payload.country);
+                }
+              }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="country" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="headcount" fill="#8338ec" name="Headcount" />
+                <Bar dataKey="headcount" fill="#8338ec" name="Headcount" cursor="pointer" />
               </BarChart>
             </ResponsiveContainer>
           </div>
-
           {/* Budget Variance */}
           <div className="dash-section">
             <h2>📈 Forecast vs Budget Variance by Country (2025-2026)</h2>
@@ -592,8 +615,38 @@ function Dashboard() {
           </div>
         </>
       )}
+/* ───────────── HEADCOUNT DETAIL ───────────── */}
+      {level === 'headcount-detail' && (
+        <div className="dash-section">
+          <h2>🌍 {selectedHCCountry} — Headcount by Department</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={hcByDepartment}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="department" angle={-20} textAnchor="end" height={90} fontSize={11} />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="headcount" fill="#8338ec" name="Headcount" />
+            </BarChart>
+          </ResponsiveContainer>
+          <table className="dash-table">
+            <thead>
+              <tr><th>Department</th><th>Headcount</th><th>Avg Salary</th><th>Avg Total Comp</th></tr>
+            </thead>
+            <tbody>
+              {hcByDepartment.map((row, i) => (
+                <tr key={i}>
+                  <td>{row.department}</td>
+                  <td>{row.headcount}</td>
+                  <td>${Number(row.avg_salary).toLocaleString()}</td>
+                  <td>${Number(row.avg_total_comp).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-    </div>
+ </div>
   );
 }
 

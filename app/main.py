@@ -328,3 +328,22 @@ def get_variance_monthly(
             pivot[pd_date]["forecast"] = row["net_profit"]
 
     return list(pivot.values())
+@app.get("/employees/by-department-for-country")
+def get_employees_by_department_for_country(
+    country: str,
+    db: Session = Depends(get_db)
+):
+    """Headcount and salary by department for a given country"""
+    query = """
+        SELECT
+            department,
+            COUNT(*) as headcount,
+            ROUND(AVG(salary)::numeric, 2) as avg_salary,
+            ROUND(AVG(total_compensation)::numeric, 2) as avg_total_comp
+        FROM employees
+        WHERE country = :country
+        GROUP BY department
+        ORDER BY headcount DESC
+    """
+    result = db.execute(text(query), {"country": country})
+    return result.mappings().all()

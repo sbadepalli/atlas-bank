@@ -9,7 +9,7 @@ const AGENTS = [
   { id: 'rag', label: '📚 Ask Past Reports', endpoint: '/agent/rag', param: 'question' },
 ];
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'http://13.219.143.181:8000';
 
 function App() {
   const [view, setView] = useState('chat');
