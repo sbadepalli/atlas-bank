@@ -8,8 +8,7 @@ const API_BASE = 'http://13.219.143.181:8000';
 const COLORS = ['#0d3b66', '#3a86ff', '#8338ec', '#fb5607', '#ffbe0b', '#06d6a0', '#ef476f', '#118ab2'];
 
 function Dashboard() {
-    //Updated for drill through.
-  // drill-through state: 'country' | 'department' | 'account' | 'monthly' | 'workforce-detail' | 'variance-detail'
+  // drill-through state: 'country' | 'department' | 'account'
   const [level, setLevel] = useState('country');
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
@@ -26,17 +25,14 @@ function Dashboard() {
   const [byCountryHC, setByCountryHC] = useState([]);
   const [variance, setVariance] = useState([]);
 
-  // Workforce drill-through
-  const [selectedWorkforceDept, setSelectedWorkforceDept] = useState(null);
+  const [loading, setLoading] = useState(true);
+const [selectedWorkforceDept, setSelectedWorkforceDept] = useState(null);
   const [compByCountry, setCompByCountry] = useState([]);
   const [deptEmployees, setDeptEmployees] = useState([]);
 
-  // Variance drill-through
   const [selectedVarianceCountry, setSelectedVarianceCountry] = useState(null);
   const [varianceByDept, setVarianceByDept] = useState([]);
   const [varianceMonthly, setVarianceMonthly] = useState([]);
-
-  const [loading, setLoading] = useState(true);
 
   // ── Fetch top-level data on mount ──────────────────────
   useEffect(() => {
@@ -106,7 +102,7 @@ function Dashboard() {
     }
   };
 
-  // ── Drill into Workforce department ──────────────────
+// ── Drill into Workforce department ──────────────────
   const drillIntoWorkforce = async (department) => {
     setLoading(true);
     try {
@@ -230,7 +226,6 @@ function Dashboard() {
           {/* Workforce */}
           <div className="dash-section">
             <h2>👥 Workforce Overview by Department</h2>
-            <p className="hint">Click a department to see compensation breakdown and employee list</p>
             <div className="dash-row">
               <ResponsiveContainer width="50%" height={300}>
                 <PieChart>
@@ -241,8 +236,6 @@ function Dashboard() {
                     cx="50%" cy="50%"
                     outerRadius={100}
                     label={(entry) => entry.department}
-                    onClick={(entry) => drillIntoWorkforce(entry.department)}
-                    cursor="pointer"
                   >
                     {workforce.map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -253,31 +246,26 @@ function Dashboard() {
               </ResponsiveContainer>
 
               <ResponsiveContainer width="50%" height={300}>
-                <BarChart data={workforce} onClick={(e) => {
-                  if (e && e.activePayload && e.activePayload[0]) {
-                    drillIntoWorkforce(e.activePayload[0].payload.department);
-                  }
-                }}>
+                <BarChart data={workforce}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="department" angle={-20} textAnchor="end" height={80} fontSize={11} />
                   <YAxis />
                   <Tooltip formatter={(v) => `$${Number(v).toLocaleString()}`} />
-                  <Bar dataKey="avg_salary" fill="#3a86ff" name="Avg Salary" cursor="pointer" />
+                  <Bar dataKey="avg_salary" fill="#3a86ff" name="Avg Salary" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <table className="dash-table">
               <thead>
-                <tr><th>Department</th><th>Headcount</th><th>Avg Salary</th><th>Avg Total Comp</th><th></th></tr>
+                <tr><th>Department</th><th>Headcount</th><th>Avg Salary</th><th>Avg Total Comp</th></tr>
               </thead>
               <tbody>
                 {workforce.map((row, i) => (
-                  <tr key={i} className="clickable-row" onClick={() => drillIntoWorkforce(row.department)}>
+                  <tr key={i}>
                     <td>{row.department}</td>
                     <td>{row.headcount}</td>
                     <td>${Number(row.avg_salary).toLocaleString()}</td>
                     <td>${Number(row.avg_total_comp).toLocaleString()}</td>
-                    <td>→</td>
                   </tr>
                 ))}
               </tbody>
@@ -301,35 +289,29 @@ function Dashboard() {
           {/* Budget Variance */}
           <div className="dash-section">
             <h2>📈 Forecast vs Budget Variance by Country (2025-2026)</h2>
-            <p className="hint">Click a country to see department-level variance and monthly trend</p>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={variance} onClick={(e) => {
-                if (e && e.activePayload && e.activePayload[0]) {
-                  drillIntoVariance(e.activePayload[0].payload.country);
-                }
-              }}>
+              <BarChart data={variance}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="country" />
                 <YAxis tickFormatter={fmtMoney} width={70} />
                 <Tooltip formatter={(v) => fmtMoney(v)} />
                 <Legend />
-                <Bar dataKey="variance_revenue" fill="#06d6a0" name="Revenue Variance" cursor="pointer" />
-                <Bar dataKey="variance_profit" fill="#ef476f" name="Profit Variance" cursor="pointer" />
+                <Bar dataKey="variance_revenue" fill="#06d6a0" name="Revenue Variance" />
+                <Bar dataKey="variance_profit" fill="#ef476f" name="Profit Variance" />
               </BarChart>
             </ResponsiveContainer>
             <table className="dash-table">
               <thead>
-                <tr><th>Country</th><th>Budget Revenue</th><th>Forecast Revenue</th><th>Revenue Variance</th><th>Profit Variance</th><th></th></tr>
+                <tr><th>Country</th><th>Budget Revenue</th><th>Forecast Revenue</th><th>Revenue Variance</th><th>Profit Variance</th></tr>
               </thead>
               <tbody>
                 {variance.map((row, i) => (
-                  <tr key={i} className="clickable-row" onClick={() => drillIntoVariance(row.country)}>
+                  <tr key={i}>
                     <td>{row.country}</td>
                     <td>{fmtMoney(row.budget_revenue)}</td>
                     <td>{fmtMoney(row.forecast_revenue)}</td>
                     <td>{fmtMoney(row.variance_revenue)}</td>
                     <td>{fmtMoney(row.variance_profit)}</td>
-                    <td>→</td>
                   </tr>
                 ))}
               </tbody>
@@ -468,134 +450,8 @@ function Dashboard() {
         </div>
       )}
 
-      {/* ───────────── WORKFORCE DETAIL ───────────── */}
-      {level === 'workforce-detail' && (
-        <>
-          <div className="dash-section">
-            <h2>💵 {selectedWorkforceDept} — Compensation by Country</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={compByCountry}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="country" />
-                <YAxis tickFormatter={(v) => `$${(v/1000).toFixed(0)}K`} width={60} />
-                <Tooltip formatter={(v) => `$${Number(v).toLocaleString()}`} />
-                <Legend />
-                <Bar dataKey="avg_salary" fill="#0d3b66" name="Avg Salary" />
-                <Bar dataKey="avg_ic" fill="#3a86ff" name="Avg IC" />
-                <Bar dataKey="avg_rsu" fill="#8338ec" name="Avg RSU" />
-              </BarChart>
-            </ResponsiveContainer>
-            <table className="dash-table">
-              <thead>
-                <tr><th>Country</th><th>Headcount</th><th>Avg Salary</th><th>Avg IC</th><th>Avg RSU</th><th>Avg Total Comp</th></tr>
-              </thead>
-              <tbody>
-                {compByCountry.map((row, i) => (
-                  <tr key={i}>
-                    <td>{row.country}</td>
-                    <td>{row.headcount}</td>
-                    <td>${Number(row.avg_salary).toLocaleString()}</td>
-                    <td>${Number(row.avg_ic).toLocaleString()}</td>
-                    <td>${Number(row.avg_rsu).toLocaleString()}</td>
-                    <td>${Number(row.avg_total_comp).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="dash-section">
-            <h2>👤 {selectedWorkforceDept} — Employee List</h2>
-            <table className="dash-table">
-              <thead>
-                <tr><th>ID</th><th>Name</th><th>Job Title</th><th>Country</th><th>Location</th><th>Salary</th><th>Total Comp</th></tr>
-              </thead>
-              <tbody>
-                {deptEmployees.map((row, i) => (
-                  <tr key={i}>
-                    <td>{row.employee_id}</td>
-                    <td>{row.full_name}</td>
-                    <td>{row.job_title}</td>
-                    <td>{row.country}</td>
-                    <td>{row.location}</td>
-                    <td>${Number(row.salary).toLocaleString()}</td>
-                    <td>${Number(row.total_compensation).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
-      {/* ───────────── VARIANCE DETAIL ───────────── */}
-      {level === 'variance-detail' && (
-        <>
-          <div className="dash-section">
-            <h2>📊 {selectedVarianceCountry} — Variance by Department</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={varianceByDept}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="department_name" angle={-20} textAnchor="end" height={90} fontSize={11} />
-                <YAxis tickFormatter={fmtMoney} width={70} />
-                <Tooltip formatter={(v) => fmtMoney(v)} />
-                <Legend />
-                <Bar dataKey="variance_revenue" fill="#06d6a0" name="Revenue Variance" />
-                <Bar dataKey="variance_profit" fill="#ef476f" name="Profit Variance" />
-              </BarChart>
-            </ResponsiveContainer>
-            <table className="dash-table">
-              <thead>
-                <tr><th>Department</th><th>Budget Revenue</th><th>Forecast Revenue</th><th>Revenue Variance</th><th>Profit Variance</th></tr>
-              </thead>
-              <tbody>
-                {varianceByDept.map((row, i) => (
-                  <tr key={i}>
-                    <td>{row.department_name}</td>
-                    <td>{fmtMoney(row.budget_revenue)}</td>
-                    <td>{fmtMoney(row.forecast_revenue)}</td>
-                    <td>{fmtMoney(row.variance_revenue)}</td>
-                    <td>{fmtMoney(row.variance_profit)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <div className="dash-section">
-            <h2>📅 {selectedVarianceCountry} — Monthly Budget vs Forecast (Net Profit)</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={varianceMonthly}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="period_date" fontSize={11} />
-                <YAxis tickFormatter={fmtMoney} width={70} />
-                <Tooltip formatter={(v) => fmtMoney(v)} />
-                <Legend />
-                <Line type="monotone" dataKey="budget" stroke="#3a86ff" name="Budget" dot={false} />
-                <Line type="monotone" dataKey="forecast" stroke="#ef476f" name="Forecast" dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-            <table className="dash-table">
-              <thead>
-                <tr><th>Month</th><th>Budget Net Profit</th><th>Forecast Net Profit</th></tr>
-              </thead>
-              <tbody>
-                {varianceMonthly.map((row, i) => (
-                  <tr key={i}>
-                    <td>{row.period_date}</td>
-                    <td>{row.budget !== null ? fmtMoney(row.budget) : '-'}</td>
-                    <td>{row.forecast !== null ? fmtMoney(row.forecast) : '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
-
     </div>
   );
 }
 
 export default Dashboard;
-
