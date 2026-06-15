@@ -615,7 +615,7 @@ const [variance, setVariance] = useState([]);
           </div>
         </>
       )}
-/* ───────────── HEADCOUNT DETAIL ───────────── */}
+{/* ───────────── HEADCOUNT DETAIL ───────────── */}
       {level === 'headcount-detail' && (
         <div className="dash-section">
           <h2>🌍 {selectedHCCountry} — Headcount by Department</h2>
